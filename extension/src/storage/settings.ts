@@ -6,6 +6,8 @@ export type ExtensionSettings = {
   correctionMode: CorrectionMode;
   backendUrl: string;
   consentAccepted: boolean;
+  /** User-owned Groq key — stored in chrome.storage.local only (never sync). */
+  groqApiKey: string;
 };
 
 export type HistoryItem = {
@@ -16,6 +18,7 @@ export type HistoryItem = {
 };
 
 const SETTINGS_KEY = 'ewa_settings';
+const API_KEY_KEY = 'ewa_groq_api_key';
 const HISTORY_KEY = 'ewa_history';
 
 export const defaultSettings: ExtensionSettings = {
@@ -24,6 +27,7 @@ export const defaultSettings: ExtensionSettings = {
   correctionMode: DEFAULTS.CORRECTION_MODE_DEFAULT,
   backendUrl: DEFAULTS.BACKEND_URL,
   consentAccepted: false,
+  groqApiKey: '',
 };
 
 const LOCAL_BACKEND =
@@ -45,16 +49,29 @@ function normalizeCorrectionMode(value: unknown): CorrectionMode {
   return value === 'direct' ? 'direct' : 'box';
 }
 
+function normalizeApiKey(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+async function getStoredApiKey(): Promise<string> {
+  const result = await chrome.storage.local.get(API_KEY_KEY);
+  return normalizeApiKey(result[API_KEY_KEY]);
+}
+
 export async function getSettings(): Promise<ExtensionSettings> {
-  const result = await chrome.storage.sync.get(SETTINGS_KEY);
-  const raw = (result[SETTINGS_KEY] as Partial<ExtensionSettings> | undefined) ?? {};
+  const [syncResult, groqApiKey] = await Promise.all([
+    chrome.storage.sync.get(SETTINGS_KEY),
+    getStoredApiKey(),
+  ]);
+  const raw = (syncResult[SETTINGS_KEY] as Partial<ExtensionSettings> | undefined) ?? {};
+  const { groqApiKey: _ignoredKey, ...rest } = raw;
   const merged: ExtensionSettings = {
     ...defaultSettings,
-    ...raw,
+    ...rest,
     correctionMode: normalizeCorrectionMode(raw.correctionMode),
+    groqApiKey,
   };
   if (isUnpackedExtension()) {
-    // Always use the Herd local URL for unpacked builds (falls back in background).
     merged.backendUrl = DEFAULTS.LOCAL_BACKEND_URL;
   } else if (isLocalBackendUrl(merged.backendUrl)) {
     merged.backendUrl = defaultSettings.backendUrl;
@@ -65,7 +82,14 @@ export async function getSettings(): Promise<ExtensionSettings> {
 export async function setSettings(patch: Partial<ExtensionSettings>): Promise<ExtensionSettings> {
   const current = await getSettings();
   const next = { ...current, ...patch };
-  await chrome.storage.sync.set({ [SETTINGS_KEY]: next });
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'groqApiKey')) {
+    await chrome.storage.local.set({ [API_KEY_KEY]: normalizeApiKey(patch.groqApiKey) });
+    next.groqApiKey = normalizeApiKey(patch.groqApiKey);
+  }
+
+  const { groqApiKey: _key, ...syncable } = next;
+  await chrome.storage.sync.set({ [SETTINGS_KEY]: syncable });
   return next;
 }
 

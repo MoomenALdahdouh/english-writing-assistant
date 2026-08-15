@@ -28,10 +28,10 @@ export default defineManifest({
   },
   permissions: ['storage'],
   host_permissions: [
+    'https://api.groq.com/*',
     'https://writing-api.zaixos.com/*',
     'https://writing-api.test/*',
     'http://127.0.0.1:8787/*',
-    'http://localhost:8787/*',
     'http://localhost:8787/*',
   ],
   content_scripts: [

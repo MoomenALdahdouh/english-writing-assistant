@@ -2,6 +2,7 @@ import Groq from 'groq-sdk';
 import {
   CORRECTION_SYSTEM_PROMPT,
   CorrectionResponseSchema,
+  coerceCorrectionPayload,
   DEFAULTS,
   GROQ_CORRECTION_JSON_SCHEMA,
   type CorrectRequest,
@@ -34,42 +35,8 @@ function supportsJsonSchema(model: string): boolean {
 }
 
 function completionBudget(): number {
-  // gpt-oss uses reasoning tokens inside max_tokens; a tight cap truncates JSON.
   if (supportsJsonSchema(config.groqModel)) return 1536;
-  // Instant / chat models only need a short structured JSON payload.
   return 400;
-}
-
-/** Tolerate common alias fields from json_object models (e.g. suggestion → corrected). */
-export function coerceCorrectionPayload(parsed: unknown): unknown {
-  if (!parsed || typeof parsed !== 'object') return parsed;
-  const obj = parsed as Record<string, unknown>;
-  const typeMap: Record<string, 'spelling' | 'grammar' | 'wording'> = {
-    spelling: 'spelling',
-    grammar: 'grammar',
-    wording: 'wording',
-    punctuation: 'grammar',
-    typo: 'spelling',
-    style: 'wording',
-    word: 'wording',
-  };
-  const changes = Array.isArray(obj.changes)
-    ? obj.changes.map((item) => {
-        if (!item || typeof item !== 'object') return item;
-        const change = item as Record<string, unknown>;
-        const corrected =
-          typeof change.corrected === 'string'
-            ? change.corrected
-            : typeof change.suggestion === 'string'
-              ? change.suggestion
-              : change.corrected;
-        const rawType = typeof change.type === 'string' ? change.type.toLowerCase() : '';
-        const type = typeMap[rawType] ?? 'grammar';
-        const { suggestion: _suggestion, ...rest } = change;
-        return { ...rest, type, corrected };
-      })
-    : obj.changes;
-  return { ...obj, changes };
 }
 
 async function callGroqOnce(
@@ -94,7 +61,6 @@ async function callGroqOnce(
       }
     : { type: 'json_object' as const };
 
-  // Groq structured outputs (json_schema). SDK typings lag the HTTP API.
   const completion = (await client.chat.completions.create({
     model: config.groqModel,
     temperature: 0.1,
@@ -129,7 +95,6 @@ async function callGroqOnce(
 }
 
 function normalizeResponse(raw: CorrectionResponse, sourceText: string): CorrectionResponse {
-  // Prefer the client's original text for consistency
   return {
     originalText: sourceText,
     correctedText: raw.correctedText,
@@ -192,3 +157,6 @@ export async function correctText(
   });
   throw lastError instanceof Error ? lastError : new Error('Correction failed');
 }
+
+// Re-export for existing tests that import from this module
+export { coerceCorrectionPayload } from '@ewa/shared';

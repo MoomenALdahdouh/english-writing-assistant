@@ -37,6 +37,7 @@ let settings: SettingsPayload = {
   correctionMode: DEFAULTS.CORRECTION_MODE_DEFAULT,
   backendUrl: DEFAULTS.BACKEND_URL,
   consentAccepted: false,
+  groqApiKey: '',
 };
 
 let active: Session | null = null;
@@ -81,6 +82,7 @@ async function refreshSettings(): Promise<void> {
         ...next,
         consentAccepted: next.consentAccepted === true,
         correctionMode: next.correctionMode === 'direct' ? 'direct' : 'box',
+        groqApiKey: typeof next.groqApiKey === 'string' ? next.groqApiKey : '',
       };
     }
     if (active) {
@@ -340,16 +342,21 @@ async function requestCorrection(session: Session, text: string, generation: num
 
     if (!result?.ok || !result.data) {
       const errCode = result?.error ?? 'unknown';
-      // http_5xx from Herd usually means the local Node API is down
       const asNetwork = errCode === 'network' || /^http_5\d\d$/.test(errCode);
       log.warn('correct_result_failed', errCode);
       if (isBoxMode()) {
         const message =
           errCode === 'disabled'
             ? 'Open the extension icon and tap I agree'
-            : asNetwork
-              ? 'Backend unreachable — run npm run dev:backend'
-              : undefined;
+            : errCode === 'missing_api_key'
+              ? 'Open the extension and add your free Groq API key'
+              : errCode === 'invalid_api_key'
+                ? 'Groq API key looks invalid — check it in the popup'
+                : errCode === 'rate_limited'
+                  ? 'Groq rate limit hit — try again in a moment'
+                  : asNetwork
+                    ? 'Could not reach Groq — check your connection'
+                    : undefined;
         session.card.setError(message);
       }
       return;

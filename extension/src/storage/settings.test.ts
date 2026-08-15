@@ -76,4 +76,18 @@ describe('settings and history storage', () => {
     const { getSettings } = await import('./settings');
     expect((await getSettings()).backendUrl).toBe('https://writing-api.zaixos.com');
   });
+
+  it('stores the Groq API key in local storage only', async () => {
+    const { getSettings, setSettings } = await import('./settings');
+
+    await setSettings({ groqApiKey: '  gsk_test_key  ' });
+    expect((await getSettings()).groqApiKey).toBe('gsk_test_key');
+    expect(store.ewa_groq_api_key).toBe('gsk_test_key');
+
+    const synced = store.ewa_settings as Record<string, unknown> | undefined;
+    expect(synced?.groqApiKey).toBeUndefined();
+
+    await setSettings({ groqApiKey: '' });
+    expect((await getSettings()).groqApiKey).toBe('');
+  });
 });

@@ -10,6 +10,7 @@ import {
   isUnpackedExtension,
   setSettings,
 } from '../storage/settings';
+import { correctWithUserGroqKey } from './groqCorrect';
 
 const log = createLogger('background');
 const cache = new LruCache<{ originalText: string; correctedText: string; changes: unknown[] }>(
@@ -69,25 +70,76 @@ async function correct(
 
   const key = hashText(text.trim());
   const cached = cache.get(key);
-    if (cached) {
+  if (cached) {
     const validated = CorrectionResponseSchema.safeParse(cached);
     if (validated.success) {
       return { type: 'CORRECT_RESULT', requestId, ok: true, data: validated.data, timing: { backendMs: 0 } };
     }
   }
 
-    inflight.get(requestId)?.abort();
+  inflight.get(requestId)?.abort();
   const controller = new AbortController();
   inflight.set(requestId, controller);
-  const fetchStarted = Date.now();
 
   try {
-    const base = settings.backendUrl.replace(/\/$/, '');
+    // Preferred path for public use: user's own Groq key (no hosted backend required).
+    if (settings.groqApiKey) {
+      try {
+        const result = await correctWithUserGroqKey(
+          settings.groqApiKey,
+          { text, context: { fieldType: fieldType as 'textarea' | 'text' | 'contenteditable' | 'other' | undefined, previousText } },
+          controller.signal,
+        );
+        cache.set(key, result.data);
+        log.debug('perf', { requestId, backendMs: result.latencyMs, model: result.model, chars: text.length, via: 'user_key' });
+        return {
+          type: 'CORRECT_RESULT',
+          requestId,
+          ok: true,
+          data: result.data,
+          timing: { backendMs: result.latencyMs, model: result.model },
+        };
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return { type: 'CORRECT_RESULT', requestId, ok: false, aborted: true, error: 'aborted' };
+        }
+        const msg = err instanceof Error ? err.message : 'unknown';
+        log.warn('groq_direct_failed', msg);
+        if (msg === 'invalid_api_key') {
+          return { type: 'CORRECT_RESULT', requestId, ok: false, error: 'invalid_api_key' };
+        }
+        if (msg === 'rate_limited') {
+          return { type: 'CORRECT_RESULT', requestId, ok: false, error: 'rate_limited' };
+        }
+        return { type: 'CORRECT_RESULT', requestId, ok: false, error: 'network' };
+      }
+    }
+
+    // No user key: public builds require BYOK. Unpacked/dev can use a local backend.
+    if (!isUnpackedExtension()) {
+      return { type: 'CORRECT_RESULT', requestId, ok: false, error: 'missing_api_key' };
+    }
+    return correctViaBackend(requestId, text, fieldType, previousText, settings.backendUrl, controller);
+  } finally {
+    inflight.delete(requestId);
+  }
+}
+
+async function correctViaBackend(
+  requestId: string,
+  text: string,
+  fieldType: string | undefined,
+  previousText: string | undefined,
+  backendUrl: string,
+  controller: AbortController,
+): Promise<CorrectResultMessage> {
+  const fetchStarted = Date.now();
+  try {
+    const base = backendUrl.replace(/\/$/, '');
     const urls: string[] = [];
     const pushUnique = (url: string) => {
       if (url && !urls.includes(url)) urls.push(url);
     };
-    // Unpacked: prefer direct Node first so a dead Herd proxy does not block corrections.
     if (isUnpackedExtension()) {
       pushUnique(DEFAULTS.LOCAL_BACKEND_FALLBACK_URL);
       pushUnique('http://localhost:8787');
@@ -121,7 +173,6 @@ async function correct(
           }),
           signal: controller.signal,
         });
-        // Gateway / upstream failures: try next local URL instead of failing immediately.
         if (!attempt.ok && attempt.status >= 500 && i < urls.length - 1) {
           lastStatus = attempt.status;
           continue;
@@ -133,7 +184,10 @@ async function correct(
         if (err instanceof DOMException && err.name === 'AbortError') throw err;
       }
     }
-    if (!res) throw lastErr instanceof Error ? lastErr : new Error(lastStatus ? `http_${lastStatus}` : 'network');
+    if (!res) {
+      // No user key and no reachable backend — guide them to paste a key.
+      return { type: 'CORRECT_RESULT', requestId, ok: false, error: 'missing_api_key' };
+    }
 
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
@@ -153,10 +207,10 @@ async function correct(
       return { type: 'CORRECT_RESULT', requestId, ok: false, error: 'invalid_response' };
     }
 
-    cache.set(key, validated.data);
+    cache.set(hashText(text.trim()), validated.data);
     const backendMs = Number(res.headers.get('x-ewa-latency-ms')) || Date.now() - fetchStarted;
     const model = res.headers.get('x-ewa-model') ?? undefined;
-    log.debug('perf', { requestId, backendMs, model, chars: text.length });
+    log.debug('perf', { requestId, backendMs, model, chars: text.length, via: 'backend' });
     return {
       type: 'CORRECT_RESULT',
       requestId,
@@ -169,8 +223,6 @@ async function correct(
       return { type: 'CORRECT_RESULT', requestId, ok: false, aborted: true, error: 'aborted' };
     }
     log.warn('correct_failed', err instanceof Error ? err.message : 'unknown');
-    return { type: 'CORRECT_RESULT', requestId, ok: false, error: 'network' };
-  } finally {
-    inflight.delete(requestId);
+    return { type: 'CORRECT_RESULT', requestId, ok: false, error: 'missing_api_key' };
   }
 }

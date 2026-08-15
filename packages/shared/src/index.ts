@@ -83,6 +83,7 @@ export const PRODUCT = {
   SUPPORT_EMAIL: 'support@zaixos.com',
   HELLO_EMAIL: 'hello@zaixos.com',
   KOFI_URL: 'https://ko-fi.com/moomenaldahdouh',
+  GROQ_KEYS_URL: 'https://console.groq.com/keys',
 } as const;
 
 export const DEFAULTS = {
@@ -117,3 +118,35 @@ export const CORRECTION_SYSTEM_PROMPT = `Correct English spelling, grammar, punc
 
 Good: "I want to go library tomorrow because I need study." → "I want to go to the library tomorrow because I need to study."
 Bad: rewriting that into "I intend to visit the library tomorrow because I need to study."`;
+
+/** Tolerate common alias fields from json_object models (e.g. suggestion → corrected). */
+export function coerceCorrectionPayload(parsed: unknown): unknown {
+  if (!parsed || typeof parsed !== 'object') return parsed;
+  const obj = parsed as Record<string, unknown>;
+  const typeMap: Record<string, ChangeType> = {
+    spelling: 'spelling',
+    grammar: 'grammar',
+    wording: 'wording',
+    punctuation: 'grammar',
+    typo: 'spelling',
+    style: 'wording',
+    word: 'wording',
+  };
+  const changes = Array.isArray(obj.changes)
+    ? obj.changes.map((item) => {
+        if (!item || typeof item !== 'object') return item;
+        const change = item as Record<string, unknown>;
+        const corrected =
+          typeof change.corrected === 'string'
+            ? change.corrected
+            : typeof change.suggestion === 'string'
+              ? change.suggestion
+              : change.corrected;
+        const rawType = typeof change.type === 'string' ? change.type.toLowerCase() : '';
+        const type = typeMap[rawType] ?? 'grammar';
+        const { suggestion: _suggestion, ...rest } = change;
+        return { ...rest, type, corrected };
+      })
+    : obj.changes;
+  return { ...obj, changes };
+}

@@ -32,6 +32,7 @@ export type SetSettingsMessage = {
     correctionMode?: CorrectionMode;
     backendUrl?: string;
     consentAccepted?: boolean;
+    groqApiKey?: string;
   };
 };
 export type GetHistoryMessage = { type: 'GET_HISTORY' };
@@ -57,4 +58,5 @@ export type SettingsPayload = {
   correctionMode: CorrectionMode;
   backendUrl: string;
   consentAccepted: boolean;
+  groqApiKey: string;
 };
