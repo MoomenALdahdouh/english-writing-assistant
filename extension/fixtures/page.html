@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>EWA Fixture</title>
+    <style>
+      body { font-family: Georgia, serif; margin: 40px; background: #f5f1e8; color: #1c1917; }
+      h1 { margin-bottom: 8px; }
+      h2 { margin: 36px 0 8px; font-size: 15px; font-weight: 650; }
+      p.note { margin: 0 0 24px; color: #78716c; font-size: 13px; }
+      label { display: block; margin: 16px 0 8px; font-weight: 600; }
+      /* Classic form field */
+      #ta {
+        width: 520px; max-width: 100%; min-height: 120px;
+        padding: 12px; border: 1px solid #d6d3d1; border-radius: 8px;
+        background: white; font: inherit; color: inherit;
+      }
+      /* Chat-style composer: no border, large radius */
+      .chat-shell {
+        width: 520px; max-width: 100%;
+        background: #fff; border-radius: 28px; padding: 16px 16px 12px;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
+      }
+      #chat {
+        min-height: 56px; outline: none; border: 0; background: transparent;
+        font: 16px/1.45 system-ui, sans-serif; color: #111;
+      }
+      /* Dark compact input */
+      #dark {
+        width: 520px; max-width: 100%; min-height: 44px;
+        padding: 10px 14px; border: 1px solid #3f3f46; border-radius: 10px;
+        background: #18181b; color: #fafafa;
+        font: 14px/1.4 ui-sans-serif, system-ui, sans-serif;
+      }
+      #dynamic-host { margin-top: 24px; }
+    </style>
+  </head>
+  <body>
+    <h1>English Writing Assistant Fixture</h1>
+    <p class="note">Three host styles — the correction row must match each field, not our brand card.</p>
+
+    <h2>1. Classic bordered textarea</h2>
+    <label for="ta">Textarea</label>
+    <textarea id="ta" placeholder="Type English here"></textarea>
+
+    <h2>2. Chat composer (no border)</h2>
+    <div class="chat-shell">
+      <div id="chat" contenteditable="true" role="textbox" aria-label="Chat composer"></div>
+    </div>
+
+    <h2>3. Dark input</h2>
+    <label for="dark">Dark field</label>
+    <textarea id="dark" placeholder="Type in dark mode"></textarea>
+
+    <div id="dynamic-host"></div>
+    <button id="add-dynamic" type="button">Add dynamic textarea</button>
+
+    <script>
+      document.getElementById('add-dynamic').addEventListener('click', () => {
+        const t = document.createElement('textarea');
+        t.id = 'dyn';
+        t.placeholder = 'Dynamic field';
+        t.style.cssText = 'width:520px;max-width:100%;min-height:80px;padding:12px;border:1px solid #d6d3d1;border-radius:8px;background:white;font:inherit;';
+        document.getElementById('dynamic-host').appendChild(t);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>English Writing Assistant — write clearly on any website</title>
+    <meta
+      name="description"
+      content="A Chrome extension that sits under the field you are already writing in and offers compact English spelling and grammar corrections. Built by Zaixos."
+    />
+    <link rel="canonical" href="https://writing.zaixos.com/" />
+    <meta property="og:title" content="English Writing Assistant" />
+    <meta
+      property="og:description"
+      content="Inline English corrections that feel like part of the website, not a floating popup."
+    />
+    <meta property="og:url" content="https://writing.zaixos.com/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Outfit:wght@400;500;650&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="nav">
+        <a class="brand" href="./">
+          <span class="mark">E</span>
+          English Writing Assistant
+        </a>
+        <nav class="nav-links">
+          <a href="#how">How it works</a>
+          <a href="#privacy">Privacy</a>
+          <a href="./privacy.html">Policy</a>
+          <a class="btn btn-primary" href="https://chromewebstore.google.com/">Get the extension</a>
+        </nav>
+      </header>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow">A Zaixos writing tool</p>
+          <h1>Write English. Keep your place on the page.</h1>
+          <p class="lede">
+            Corrections appear as a quiet second line under the field you are already using — not a
+            floating card, not a rewrite engine, not another app.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://chromewebstore.google.com/">Add to Chrome</a>
+            <a class="btn btn-ghost" href="./privacy.html">Read the privacy policy</a>
+          </div>
+          <p class="fine">Free to use. Support the work on Ko-fi if it helps you write.</p>
+        </div>
+        <div class="stage" aria-hidden="true">
+          <div class="browser-bar"><i></i><i></i><i></i></div>
+          <div class="field">I recieve your message</div>
+          <div class="row">
+            <span>I <span class="mark-word">received</span> your message.</span>
+            <span class="apply">Apply</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="band">
+        <div>
+          <strong>Inline</strong>
+          <span>Attached under the field, content-sized, never a modal.</span>
+        </div>
+        <div>
+          <strong>English only</strong>
+          <span>Local language checks skip non-English and tiny fragments.</span>
+        </div>
+        <div>
+          <strong>No key in the browser</strong>
+          <span>The model key stays on Zaixos servers. Never in the extension.</span>
+        </div>
+      </section>
+
+      <section class="section" id="how">
+        <h2>Three quiet steps.</h2>
+        <p class="section-intro">
+          The assistant waits until you pause, then offers a compact correction you can apply with
+          one click.
+        </p>
+        <div class="steps">
+          <article class="card">
+            <div class="num">01</div>
+            <h3>Type where you already write</h3>
+            <p>Textareas, text inputs, and contenteditable fields on ordinary websites.</p>
+          </article>
+          <article class="card">
+            <div class="num">02</div>
+            <h3>Pause for a moment</h3>
+            <p>A short wait after typing. Faster after a sentence ends. No request on every letter.</p>
+          </article>
+          <article class="card">
+            <div class="num">03</div>
+            <h3>Click the line to apply</h3>
+            <p>Spelling, grammar, and wording are marked gently. Your voice stays yours.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section split" id="privacy">
+        <div class="privacy-panel">
+          <p class="eyebrow">Limited use</p>
+          <h2>Your draft is not a product.</h2>
+          <p>
+            Typed English is sent only to generate a correction. Zaixos does not sell it, does not
+            use it for ads, and does not train a public model on your private drafts.
+          </p>
+          <p>
+            Contact
+            <a href="mailto:support@zaixos.com">support@zaixos.com</a>
+            or
+            <a href="mailto:hello@zaixos.com">hello@zaixos.com</a>.
+          </p>
+        </div>
+        <div>
+          <h2>What leaves the browser</h2>
+          <p class="section-intro">
+            After you agree in the popup, the current writing segment — usually the sentence you
+            just typed, never a password field — is sent over HTTPS to
+            <strong>writing-api.zaixos.com</strong>, then to Groq for structured correction.
+          </p>
+          <div class="steps" style="grid-template-columns: 1fr 1fr">
+            <article class="card">
+              <h3>Stored on your machine</h3>
+              <p>On/off, highlights, and up to 20 recent pairs. Clear them anytime.</p>
+            </article>
+            <article class="card">
+              <h3>Not stored as your diary</h3>
+              <p>Server logs keep request id, timing, and status — not the full draft.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div>© <span id="y"></span> Zaixos. English Writing Assistant.</div>
+        <nav>
+          <a href="./privacy.html">Privacy</a>
+          <a href="./terms.html">Terms</a>
+          <a href="mailto:support@zaixos.com">Support</a>
+          <a href="https://ko-fi.com/moomenaldahdouh">Ko-fi</a>
+          <a href="https://zaixos.com">zaixos.com</a>
+        </nav>
+      </footer>
+    </div>
+    <script>
+      document.getElementById("y").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>

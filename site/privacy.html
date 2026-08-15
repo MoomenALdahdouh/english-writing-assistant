@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy — English Writing Assistant</title>
+    <meta
+      name="description"
+      content="Privacy policy for the English Writing Assistant Chrome extension by Zaixos."
+    />
+    <link rel="canonical" href="https://writing.zaixos.com/privacy" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560&family=Outfit:wght@400;650&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="nav">
+        <a class="brand" href="./">
+          <span class="mark">E</span>
+          English Writing Assistant
+        </a>
+        <nav class="nav-links">
+          <a href="./">Home</a>
+          <a href="./terms.html">Terms</a>
+          <a href="mailto:support@zaixos.com">Support</a>
+        </nav>
+      </header>
+
+      <article class="legal-page">
+        <p class="eyebrow">Zaixos · Effective 14 August 2026</p>
+        <h1>Privacy Policy</h1>
+        <p>
+          This policy describes how Zaixos (“we”, “us”) handles information in the
+          <strong>English Writing Assistant</strong> Chrome extension and the related site at
+          writing.zaixos.com. It is written to satisfy the Chrome Web Store User Data Policy,
+          including Limited Use.
+        </p>
+        <p>
+          Contact:
+          <a href="mailto:support@zaixos.com">support@zaixos.com</a>
+          ·
+          <a href="mailto:hello@zaixos.com">hello@zaixos.com</a>
+        </p>
+
+        <h2>1. Single purpose</h2>
+        <p>
+          The product has one purpose: suggest English spelling, grammar, punctuation, and obvious
+          wording corrections while you type in supported fields on websites. We do not use data
+          collected for this purpose for advertising, credit decisions, or unrelated profiling.
+        </p>
+
+        <h2>2. Information we handle</h2>
+        <p>The extension may handle:</p>
+        <ul>
+          <li>
+            <strong>User-generated writing.</strong> After you agree in the extension popup, the
+            current English text segment (typically up to 2,000 characters of what you are writing
+            now), plus a short optional previous-text snippet and the field type (textarea, text, or
+            contenteditable).
+          </li>
+          <li>
+            <strong>Local settings.</strong> Whether the assistant is active, whether highlights are
+            on, your consent choice, and the API URL. Stored with <code>chrome.storage.sync</code>.
+          </li>
+          <li>
+            <strong>Local history.</strong> Up to 20 recent original/corrected pairs on your device
+            via <code>chrome.storage.local</code>. You can clear this from the popup.
+          </li>
+          <li>
+            <strong>Technical request metadata</strong> on our API: time, request id, model name,
+            latency, HTTP status, and token counts. We do not keep the full draft in ordinary
+            server logs.
+          </li>
+        </ul>
+        <p>We do not intentionally collect passwords, payment details, or browsing history.</p>
+
+        <h2>3. What we do not access</h2>
+        <p>
+          The content script ignores password fields and common non-text inputs, and it skips
+          known code editors (Monaco, CodeMirror, Ace). It does not read cookies, tabs APIs, or
+          your Google account.
+        </p>
+
+        <h2>4. Why we handle this information</h2>
+        <p>
+          Correction requires a language model. The browser package cannot safely hold the model
+          API key, so text is sent over HTTPS to <strong>https://writing-api.zaixos.com</strong>
+          and then to <strong>Groq</strong> to produce a structured correction. That is the only
+          reason text leaves your browser.
+        </p>
+
+        <h2>5. Sharing</h2>
+        <p>
+          We share the correction payload with Groq as our processing provider. Groq’s handling is
+          also governed by Groq’s terms and privacy policy. We do not sell your writing. We do not
+          share it with advertisers. We may disclose information if required by law.
+        </p>
+
+        <h2>6. Limited Use disclosure</h2>
+        <p>
+          User data obtained through this extension is used only to provide and improve the
+          disclosed single purpose: English writing correction. We do not use it to determine
+          creditworthiness, and we do not transfer it for unrelated commercial purposes. This
+          statement is our Chrome Web Store Limited Use disclosure.
+        </p>
+
+        <h2>7. Consent</h2>
+        <p>
+          No writing is sent until you click <strong>I agree and continue</strong> in the
+          extension popup. You can stop sending data by pausing the extension or uninstalling it.
+        </p>
+
+        <h2>8. Security and retention</h2>
+        <p>
+          Transmissions use HTTPS. Settings and history stay in Chrome storage on your profile.
+          API logs are operational (ids, timing, status) and are not a backup of your documents.
+          Groq retains data according to its own policy. We do not keep a permanent archive of
+          your drafts on Zaixos servers.
+        </p>
+
+        <h2>9. Your choices</h2>
+        <ul>
+          <li>Pause the extension — no correction requests are sent.</li>
+          <li>Clear history in the popup — local pairs are deleted.</li>
+          <li>Uninstall — the content script and local storage for this item are removed.</li>
+          <li>Email support@zaixos.com to ask what we hold or to request deletion of any server logs we can identify.</li>
+        </ul>
+
+        <h2>10. Children</h2>
+        <p>
+          The product is not directed at children under 13. We do not knowingly collect their
+          personal information.
+        </p>
+
+        <h2>11. Permissions</h2>
+        <ul>
+          <li><strong>storage</strong> — save settings and local history.</li>
+          <li>
+            <strong>Host permission for writing-api.zaixos.com</strong> — send correction requests
+            over HTTPS.
+          </li>
+          <li>
+            <strong>Content scripts on http/https pages</strong> — detect supported writing fields
+            and show the inline correction row. This is required for a writing assistant that works
+            where you type.
+          </li>
+        </ul>
+
+        <h2>12. Changes</h2>
+        <p>
+          If our practices change, we will update this page and the effective date. Material
+          changes that affect how writing is handled will also be reflected in the in-product
+          disclosure.
+        </p>
+
+        <h2>13. Operator</h2>
+        <p>
+          Zaixos ·
+          <a href="https://zaixos.com">zaixos.com</a>
+          ·
+          <a href="mailto:support@zaixos.com">support@zaixos.com</a>
+          ·
+          <a href="mailto:hello@zaixos.com">hello@zaixos.com</a>
+        </p>
+      </article>
+
+      <footer class="footer">
+        <div>© 2026 Zaixos</div>
+        <nav>
+          <a href="./">Home</a>
+          <a href="./terms.html">Terms</a>
+        </nav>
+      </footer>
+    </div>
+  </body>
+</html>
