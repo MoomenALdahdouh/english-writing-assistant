@@ -83,27 +83,30 @@ async function correct(
 
   try {
     const base = settings.backendUrl.replace(/\/$/, '');
-    const urls = [base];
-    if (base.includes('localhost')) {
-      urls.push(base.replace('localhost', '127.0.0.1'));
-    } else if (base.includes('127.0.0.1')) {
-      urls.push(base.replace('127.0.0.1', 'localhost'));
-    }
+    const urls: string[] = [];
+    const pushUnique = (url: string) => {
+      if (url && !urls.includes(url)) urls.push(url);
+    };
+    // Unpacked: prefer direct Node first so a dead Herd proxy does not block corrections.
     if (isUnpackedExtension()) {
-      for (const local of [
-        DEFAULTS.LOCAL_BACKEND_URL,
-        DEFAULTS.LOCAL_BACKEND_FALLBACK_URL,
-        'http://localhost:8787',
-      ]) {
-        if (!urls.includes(local)) urls.push(local);
-      }
+      pushUnique(DEFAULTS.LOCAL_BACKEND_FALLBACK_URL);
+      pushUnique('http://localhost:8787');
+      pushUnique(DEFAULTS.LOCAL_BACKEND_URL);
+    }
+    pushUnique(base);
+    if (base.includes('localhost')) {
+      pushUnique(base.replace('localhost', '127.0.0.1'));
+    } else if (base.includes('127.0.0.1')) {
+      pushUnique(base.replace('127.0.0.1', 'localhost'));
     }
 
     let res: Response | null = null;
     let lastErr: unknown;
-    for (const url of urls) {
+    let lastStatus = 0;
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i]!;
       try {
-        res = await fetch(`${url}/api/correct`, {
+        const attempt = await fetch(`${url}/api/correct`, {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
@@ -118,13 +121,19 @@ async function correct(
           }),
           signal: controller.signal,
         });
+        // Gateway / upstream failures: try next local URL instead of failing immediately.
+        if (!attempt.ok && attempt.status >= 500 && i < urls.length - 1) {
+          lastStatus = attempt.status;
+          continue;
+        }
+        res = attempt;
         break;
       } catch (err) {
         lastErr = err;
         if (err instanceof DOMException && err.name === 'AbortError') throw err;
       }
     }
-    if (!res) throw lastErr instanceof Error ? lastErr : new Error('network');
+    if (!res) throw lastErr instanceof Error ? lastErr : new Error(lastStatus ? `http_${lastStatus}` : 'network');
 
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));

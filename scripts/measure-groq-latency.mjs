@@ -18,10 +18,24 @@ const cases = [
   'I want to go library tomorrow',
 ];
 
-const models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+const models = ['llama-3.1-8b-instant', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
 
-function budget() {
-  return 1536;
+function budget(model) {
+  return model.includes('gpt-oss') ? 1536 : 400;
+}
+
+function responseFormat(model, schema) {
+  if (model.includes('gpt-oss')) {
+    return {
+      type: 'json_schema',
+      json_schema: {
+        name: 'english_correction',
+        strict: true,
+        schema,
+      },
+    };
+  }
+  return { type: 'json_object' };
 }
 
 async function runOne(client, model, text) {
@@ -29,19 +43,12 @@ async function runOne(client, model, text) {
   const completion = await client.chat.completions.create({
     model,
     temperature: 0.1,
-    max_tokens: budget(),
+    max_tokens: budget(model),
     messages: [
       { role: 'system', content: CORRECTION_SYSTEM_PROMPT },
       { role: 'user', content: JSON.stringify({ text }) },
     ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'english_correction',
-        strict: true,
-        schema: GROQ_CORRECTION_JSON_SCHEMA,
-      },
-    },
+    response_format: responseFormat(model, GROQ_CORRECTION_JSON_SCHEMA),
   });
   const ms = Date.now() - started;
   const raw = completion.choices[0]?.message?.content ?? '';

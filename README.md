@@ -19,9 +19,11 @@ Edit `backend/.env`:
 
 ```
 GROQ_API_KEY=your_key_here
-GROQ_MODEL=openai/gpt-oss-120b
+GROQ_MODEL=llama-3.1-8b-instant
 PORT=8787
 ```
+
+Use `llama-3.1-8b-instant` for fast corrections (~200–300ms). For stricter structured outputs you can use `openai/gpt-oss-20b` (slower) or `openai/gpt-oss-120b` (slowest).
 
 ## Start backend (Laravel Herd)
 

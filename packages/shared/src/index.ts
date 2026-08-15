@@ -86,9 +86,13 @@ export const PRODUCT = {
 } as const;
 
 export const DEFAULTS = {
-  DEBOUNCE_MS: 160,
-  WORD_BOUNDARY_DEBOUNCE_MS: 80,
-  SENTENCE_BOUNDARY_DEBOUNCE_MS: 60,
+  DEBOUNCE_MS: 120,
+  WORD_BOUNDARY_DEBOUNCE_MS: 45,
+  SENTENCE_BOUNDARY_DEBOUNCE_MS: 30,
+  /** Extra-snappy delays when correctionMode is direct */
+  DIRECT_DEBOUNCE_MS: 90,
+  DIRECT_WORD_BOUNDARY_DEBOUNCE_MS: 25,
+  DIRECT_SENTENCE_BOUNDARY_DEBOUNCE_MS: 20,
   MIN_CHARS: 8,
   MIN_WORDS: 3,
   /** Full field text above this is ignored (no UI, no API) — e.g. large pastes. */
@@ -103,11 +107,13 @@ export const DEFAULTS = {
   ENABLED_DEFAULT: true,
   /** 'box' = suggestion row (click to apply); 'direct' = rewrite the field in place */
   CORRECTION_MODE_DEFAULT: 'box' as const,
+  /** Fast Groq model for low-latency corrections (override via GROQ_MODEL). */
+  GROQ_MODEL_DEFAULT: 'llama-3.1-8b-instant',
 } as const;
 
 export type CorrectionMode = (typeof DEFAULTS)['CORRECTION_MODE_DEFAULT'] | 'direct';
 
-export const CORRECTION_SYSTEM_PROMPT = `Correct English spelling, grammar, punctuation, and obvious word-usage mistakes. Preserve meaning, tone, contractions, proper nouns, URLs, emails, code, numbers, and quoted text. Do not rewrite for style or add facts. If the text is already correct or is not English writing, return identical originalText and correctedText with empty changes. Return structured JSON only. Change types: spelling, grammar, wording. start/end are exclusive-end offsets in originalText. Prefer the smallest grammatical edit.
+export const CORRECTION_SYSTEM_PROMPT = `Correct English spelling, grammar, punctuation, and obvious word-usage mistakes. Preserve meaning, tone, contractions, proper nouns, URLs, emails, code, numbers, and quoted text. Do not rewrite for style or add facts. If the text is already correct or is not English writing, return identical originalText and correctedText with empty changes. Return one JSON object only with keys originalText, correctedText, and changes. Each change must use keys type, original, corrected, start, end (not suggestion). Change types: spelling, grammar, wording. start/end are exclusive-end offsets in originalText. Prefer the smallest grammatical edit.
 
 Good: "I want to go library tomorrow because I need study." → "I want to go to the library tomorrow because I need to study."
 Bad: rewriting that into "I intend to visit the library tomorrow because I need to study."`;

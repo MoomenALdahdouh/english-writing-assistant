@@ -26,11 +26,18 @@ export function getDebounceDelay(text: string, options: DebounceOptions = {}): n
 export class IntelligentDebouncer {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private generation = 0;
+  private options: DebounceOptions;
 
   constructor(
     private readonly run: (text: string, generation: number) => void,
-    private readonly options: DebounceOptions = {},
-  ) {}
+    options: DebounceOptions = {},
+  ) {
+    this.options = options;
+  }
+
+  setOptions(options: DebounceOptions): void {
+    this.options = { ...this.options, ...options };
+  }
 
   schedule(text: string): number {
     this.cancel();

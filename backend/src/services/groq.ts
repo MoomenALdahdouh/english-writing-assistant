@@ -29,9 +29,47 @@ function getClient(): Groq {
   return sharedClient;
 }
 
+function supportsJsonSchema(model: string): boolean {
+  return model.includes('gpt-oss');
+}
+
 function completionBudget(): number {
   // gpt-oss uses reasoning tokens inside max_tokens; a tight cap truncates JSON.
-  return 1536;
+  if (supportsJsonSchema(config.groqModel)) return 1536;
+  // Instant / chat models only need a short structured JSON payload.
+  return 400;
+}
+
+/** Tolerate common alias fields from json_object models (e.g. suggestion → corrected). */
+export function coerceCorrectionPayload(parsed: unknown): unknown {
+  if (!parsed || typeof parsed !== 'object') return parsed;
+  const obj = parsed as Record<string, unknown>;
+  const typeMap: Record<string, 'spelling' | 'grammar' | 'wording'> = {
+    spelling: 'spelling',
+    grammar: 'grammar',
+    wording: 'wording',
+    punctuation: 'grammar',
+    typo: 'spelling',
+    style: 'wording',
+    word: 'wording',
+  };
+  const changes = Array.isArray(obj.changes)
+    ? obj.changes.map((item) => {
+        if (!item || typeof item !== 'object') return item;
+        const change = item as Record<string, unknown>;
+        const corrected =
+          typeof change.corrected === 'string'
+            ? change.corrected
+            : typeof change.suggestion === 'string'
+              ? change.suggestion
+              : change.corrected;
+        const rawType = typeof change.type === 'string' ? change.type.toLowerCase() : '';
+        const type = typeMap[rawType] ?? 'grammar';
+        const { suggestion: _suggestion, ...rest } = change;
+        return { ...rest, type, corrected };
+      })
+    : obj.changes;
+  return { ...obj, changes };
 }
 
 async function callGroqOnce(
@@ -43,6 +81,18 @@ async function callGroqOnce(
   const userPayload = previousText
     ? { text, previousText, fieldType: request.context?.fieldType }
     : { text, fieldType: request.context?.fieldType };
+
+  const useSchema = supportsJsonSchema(config.groqModel);
+  const responseFormat = useSchema
+    ? {
+        type: 'json_schema' as const,
+        json_schema: {
+          name: 'english_correction',
+          strict: true,
+          schema: GROQ_CORRECTION_JSON_SCHEMA,
+        },
+      }
+    : { type: 'json_object' as const };
 
   // Groq structured outputs (json_schema). SDK typings lag the HTTP API.
   const completion = (await client.chat.completions.create({
@@ -56,14 +106,7 @@ async function callGroqOnce(
         content: JSON.stringify(userPayload),
       },
     ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'english_correction',
-        strict: true,
-        schema: GROQ_CORRECTION_JSON_SCHEMA,
-      },
-    },
+    response_format: responseFormat,
   } as unknown as Parameters<typeof client.chat.completions.create>[0])) as {
     choices: Array<{ message?: { content?: string | null } }>;
     usage?: { prompt_tokens?: number; completion_tokens?: number };
@@ -75,7 +118,7 @@ async function callGroqOnce(
   }
 
   return {
-    parsed: JSON.parse(content) as unknown,
+    parsed: coerceCorrectionPayload(JSON.parse(content) as unknown),
     usage: completion.usage
       ? {
           prompt_tokens: completion.usage.prompt_tokens,

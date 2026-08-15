@@ -32,6 +32,7 @@ export default defineManifest({
     'https://writing-api.test/*',
     'http://127.0.0.1:8787/*',
     'http://localhost:8787/*',
+    'http://localhost:8787/*',
   ],
   content_scripts: [
     {

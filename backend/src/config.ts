@@ -16,7 +16,7 @@ function required(name: string): string {
 export const config = {
   port: Number(process.env.PORT ?? 8787),
   groqApiKey: process.env.GROQ_API_KEY ?? '',
-  groqModel: process.env.GROQ_MODEL ?? 'openai/gpt-oss-120b',
+  groqModel: process.env.GROQ_MODEL ?? 'llama-3.1-8b-instant',
   rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60_000),
   rateLimitMax: Number(process.env.RATE_LIMIT_MAX ?? 60),
   corsOrigins: (process.env.CORS_ORIGINS ?? 'https://writing.zaixos.com,http://localhost:5173,chrome-extension://')

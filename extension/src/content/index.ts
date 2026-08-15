@@ -1,7 +1,8 @@
 import { DEFAULTS, type CorrectionResponse } from '@ewa/shared';
 import { findEditableFromTarget, type InputAdapter } from '../adapters';
-import { IntelligentDebouncer } from './debounce';
+import { endsWithSentenceBoundary, endsWithWordBoundary, IntelligentDebouncer } from './debounce';
 import { extractWritingContext } from './segment';
+import { applyInstantSpelling } from './instantSpell';
 import { isEligibleForCorrection, shouldShowEnglishAssistant } from '../language/detect';
 import { CorrectionCard } from '../ui/correction-card/CorrectionCard';
 import { canMergeCorrection, mergeCorrectionIntoField } from './mergeCorrection';
@@ -9,6 +10,12 @@ import { createLogger } from '../shared/logger';
 import type { CorrectResultMessage, SettingsPayload } from '../shared/messages';
 
 const log = createLogger('content');
+
+function isExtensionContextInvalidated(err?: unknown): boolean {
+  if (!chrome.runtime?.id) return true;
+  const msg = err instanceof Error ? err.message : String(err ?? '');
+  return /Extension context invalidated/i.test(msg);
+}
 
 type Session = {
   adapter: InputAdapter;
@@ -38,8 +45,36 @@ function isBoxMode(): boolean {
   return settings.correctionMode !== 'direct';
 }
 
+function debounceOptionsForMode() {
+  if (!isBoxMode()) {
+    return {
+      defaultMs: DEFAULTS.DIRECT_DEBOUNCE_MS,
+      wordBoundaryMs: DEFAULTS.DIRECT_WORD_BOUNDARY_DEBOUNCE_MS,
+      sentenceBoundaryMs: DEFAULTS.DIRECT_SENTENCE_BOUNDARY_DEBOUNCE_MS,
+    };
+  }
+  return {
+    defaultMs: DEFAULTS.DEBOUNCE_MS,
+    wordBoundaryMs: DEFAULTS.WORD_BOUNDARY_DEBOUNCE_MS,
+    sentenceBoundaryMs: DEFAULTS.SENTENCE_BOUNDARY_DEBOUNCE_MS,
+  };
+}
+
+/** Instant local typo fixes in direct mode (no API wait). */
+function maybeApplyInstantSpelling(session: Session, text: string): string {
+  if (isBoxMode()) return text;
+  if (!endsWithWordBoundary(text) && !endsWithSentenceBoundary(text)) return text;
+  const fixed = applyInstantSpelling(text);
+  if (fixed === text) return text;
+  session.adapter.setText(fixed);
+  session.lastCorrectedFor = truncateSegment(fixed);
+  session.lastSentText = session.lastCorrectedFor;
+  return fixed;
+}
+
 async function refreshSettings(): Promise<void> {
   try {
+    if (isExtensionContextInvalidated()) return;
     const next = (await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' })) as SettingsPayload;
     if (next && typeof next.enabled === 'boolean') {
       settings = {
@@ -49,6 +84,7 @@ async function refreshSettings(): Promise<void> {
       };
     }
     if (active) {
+      active.debouncer.setOptions(debounceOptionsForMode());
       active.card.setHighlights(settings.highlights);
       if (!settings.enabled) {
         teardownSession();
@@ -66,6 +102,10 @@ async function refreshSettings(): Promise<void> {
       }
     }
   } catch (err) {
+    if (isExtensionContextInvalidated(err)) {
+      log.info('extension_context_invalidated');
+      return;
+    }
     log.warn('settings_failed', err);
   }
 }
@@ -75,6 +115,10 @@ function truncateSegment(text: string): string {
 }
 
 function cancelInflight(session: Session): void {
+  if (isExtensionContextInvalidated()) {
+    session.requestIds.clear();
+    return;
+  }
   for (const requestId of session.requestIds) {
     void chrome.runtime.sendMessage({ type: 'CANCEL_CORRECT', requestId });
   }
@@ -154,16 +198,13 @@ function prepareSession(adapter: InputAdapter): Session {
 
   session.debouncer = new IntelligentDebouncer((text, generation) => {
     void requestCorrection(session, text, generation);
-  }, {
-    defaultMs: DEFAULTS.DEBOUNCE_MS,
-    wordBoundaryMs: DEFAULTS.WORD_BOUNDARY_DEBOUNCE_MS,
-    sentenceBoundaryMs: DEFAULTS.SENTENCE_BOUNDARY_DEBOUNCE_MS,
-  });
+  }, debounceOptionsForMode());
 
   const onInput = () => {
     if (!settings.enabled) return;
     if (session.composing) return;
-    const text = adapter.getText();
+    let text = adapter.getText();
+    text = maybeApplyInstantSpelling(session, text);
     syncRowVisibility(session, text);
     if (!text.trim() || !shouldShowEnglishAssistant(text)) return;
     session.generation = session.debouncer.schedule(text);
@@ -298,13 +339,16 @@ async function requestCorrection(session: Session, text: string, generation: num
     }
 
     if (!result?.ok || !result.data) {
-      log.warn('correct_result_failed', result?.error ?? 'unknown');
+      const errCode = result?.error ?? 'unknown';
+      // http_5xx from Herd usually means the local Node API is down
+      const asNetwork = errCode === 'network' || /^http_5\d\d$/.test(errCode);
+      log.warn('correct_result_failed', errCode);
       if (isBoxMode()) {
         const message =
-          result?.error === 'disabled'
+          errCode === 'disabled'
             ? 'Open the extension icon and tap I agree'
-            : result?.error === 'network'
-              ? 'Backend unreachable — is the local API running?'
+            : asNetwork
+              ? 'Backend unreachable — run npm run dev:backend'
               : undefined;
         session.card.setError(message);
       }
@@ -321,6 +365,13 @@ async function requestCorrection(session: Session, text: string, generation: num
     session.lastAppliedSeq = seq;
     applyResult(session, result.data, segment);
   } catch (err) {
+    if (isExtensionContextInvalidated(err)) {
+      log.info('extension_context_invalidated');
+      if (isBoxMode()) {
+        session.card.setError('Reload this page after updating the extension');
+      }
+      return;
+    }
     log.warn('request_failed', err);
     if (isBoxMode()) session.card.setError('Extension error — reload the page');
   } finally {
@@ -411,7 +462,8 @@ function onInputCapture(e: Event): void {
   if (!adapter) return;
   const session = ensureSession(adapter);
   if (!session || session.composing || !settings.enabled) return;
-  const text = adapter.getText();
+  let text = adapter.getText();
+  text = maybeApplyInstantSpelling(session, text);
   syncRowVisibility(session, text);
   if (!text.trim()) {
     session.debouncer.cancel();
