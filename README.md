@@ -1,16 +1,16 @@
 <div align="center">
-  <img src="extension/public/icons/icon-128.png" alt="English Writing Assistant" width="96" height="96" />
+  <img src="extension/public/icons/icon-128.png" alt="English Writing Assistant" width="120" height="120" />
 
   <h1>English Writing Assistant</h1>
 
-  <p>Chrome extension for inline English spelling and grammar corrections.</p>
+  <p>Inline English corrections while you type. Your Groq key. No hosted backend.</p>
 
   <p>
     <img alt="release" src="https://img.shields.io/badge/release-v1.3.13-0ea5e9" />
     <img alt="Chrome" src="https://img.shields.io/badge/Chrome-MV3-4285F4?logo=googlechrome&logoColor=white" />
-    <img alt="Node" src="https://img.shields.io/badge/Node-20+-111827?logo=nodedotjs&logoColor=white" />
+    <img alt="Node" src="https://img.shields.io/badge/Node-20+-111827" />
     <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" />
-    <img alt="BYOK" src="https://img.shields.io/badge/BYOK-Groq_API-F55036" />
+    <img alt="BYOK" src="https://img.shields.io/badge/BYOK-Groq-F55036" />
   </p>
 </div>
 
@@ -18,7 +18,9 @@
 
 ## Overview
 
-English Writing Assistant is a Manifest V3 Chrome extension that suggests spelling and grammar fixes while you type in web text fields. The UI stays light; corrections are produced by [Groq](https://console.groq.com/keys) using **your** free API key. No shared backend is required for normal use, and the key stays on the device in `chrome.storage.local`.
+English Writing Assistant is a distraction-light Chrome extension for spelling and grammar fixes in web text fields. It is built with `TypeScript`, Manifest `MV3`, and a small React popup. Corrections are produced by [Groq](https://console.groq.com/keys) using **your** free API key stored in `chrome.storage.local` — not a shared server key.
+
+Works on normal `textarea`, `input`, and `contenteditable` fields. Passwords and code-like editors are ignored.
 
 Site: [writing.zaixos.com](https://writing.zaixos.com) · Privacy: [writing.zaixos.com/privacy](https://writing.zaixos.com/privacy)
 
@@ -36,7 +38,7 @@ Site: [writing.zaixos.com](https://writing.zaixos.com) · Privacy: [writing.zaix
 
 ## Installation
 
-Requires [Node.js 20+](https://nodejs.org/).
+Requires [Node.js](https://nodejs.org/) `20+`.
 
 ```bash
 git clone https://github.com/MoomenALdahdouh/english-writing-assistant.git
