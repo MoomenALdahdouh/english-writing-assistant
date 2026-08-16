@@ -1,33 +1,38 @@
 <div align="center">
+  <img src="extension/public/icons/icon-128.png" alt="English Writing Assistant" width="96" height="96" />
 
-# English Writing Assistant
+  <h1>English Writing Assistant</h1>
 
-**Inline English spelling & grammar corrections while you type on the web.**
+  <p>Chrome extension for inline English spelling and grammar corrections.</p>
 
-[![Chrome](https://img.shields.io/badge/Chrome-MV3-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
-[![Node](https://img.shields.io/badge/Node-20+-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Groq](https://img.shields.io/badge/BYOK-Groq_API-F55036?logo=groq&logoColor=white)](https://console.groq.com/keys)
-
-[Website](https://writing.zaixos.com) · [Privacy](https://writing.zaixos.com/privacy) · [Get a free Groq key](https://console.groq.com/keys)
-
+  <p>
+    <img alt="release" src="https://img.shields.io/badge/release-v1.3.13-0ea5e9" />
+    <img alt="Chrome" src="https://img.shields.io/badge/Chrome-MV3-4285F4?logo=googlechrome&logoColor=white" />
+    <img alt="Node" src="https://img.shields.io/badge/Node-20+-111827?logo=nodedotjs&logoColor=white" />
+    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" />
+    <img alt="BYOK" src="https://img.shields.io/badge/BYOK-Groq_API-F55036" />
+  </p>
 </div>
 
 ---
 
 ## Overview
 
-English Writing Assistant is a Chrome Manifest V3 extension that suggests spelling and grammar fixes as you write in web text fields.
+English Writing Assistant is a Manifest V3 Chrome extension that suggests spelling and grammar fixes while you type in web text fields. The UI stays light; corrections are produced by [Groq](https://console.groq.com/keys) using **your** free API key. No shared backend is required for normal use, and the key stays on the device in `chrome.storage.local`.
 
-Each user pastes their own free [Groq API key](https://console.groq.com/keys). Corrections go straight to Groq from the extension — no shared backend required for normal use. Keys stay on the device in `chrome.storage.local`.
+Site: [writing.zaixos.com](https://writing.zaixos.com) · Privacy: [writing.zaixos.com/privacy](https://writing.zaixos.com/privacy)
+
+---
 
 ## Features
 
 - Suggestion box or direct in-field edits
-- Fast Groq model defaults (`llama-3.1-8b-instant`)
-- History of recent corrections in the popup
+- Fast default model (`llama-3.1-8b-instant`)
+- Recent correction history in the popup
 - Passwords and code-like fields are ignored
 - Optional local Node backend for development
+
+---
 
 ## Installation
 
@@ -47,10 +52,7 @@ Load the extension in Chrome:
 3. Click **Load unpacked** → select `extension/dist`
 4. Open the popup → **Continue** → paste your Groq API key → **Save key**
 
-```bash
-# Free API key
-# https://console.groq.com/keys
-```
+Free key: [console.groq.com/keys](https://console.groq.com/keys)
 
 After pulling updates:
 
@@ -61,6 +63,8 @@ npm run build
 ```
 
 Then click **Reload** on the extension card and refresh open tabs.
+
+---
 
 ## Usage
 
@@ -74,6 +78,8 @@ Then click **Reload** on the extension card and refresh open tabs.
 
 Type in a normal text field on any site. Corrections appear after a short pause.
 
+---
+
 ## Project layout
 
 ```text
@@ -83,6 +89,8 @@ english-writing-assistant/
 ├── packages/shared/    # Shared types, defaults, correction helpers
 └── site/               # Public website / privacy pages
 ```
+
+---
 
 ## Development
 
@@ -109,14 +117,18 @@ Unpacked builds can use `http://127.0.0.1:8787` or Herd at `https://writing-api.
 | `npm run typecheck` | TypeScript checks |
 | `npm run pack:store` | Zip `extension/dist` for Chrome Web Store |
 
+---
+
 ## Privacy & security
 
-- Your Groq key never leaves your browser storage except as the `Authorization` header to Groq.
+- Your Groq key is sent only as the `Authorization` header to Groq.
 - Do not commit API keys. Revoke any key that was pasted into chat or pushed to git.
 - Details: [PRIVACY.md](PRIVACY.md) · store notes: [STORE.md](STORE.md)
 
+---
+
 ## Links
 
-- Site: [https://writing.zaixos.com](https://writing.zaixos.com)
-- Privacy policy: [https://writing.zaixos.com/privacy](https://writing.zaixos.com/privacy)
-- Groq keys: [https://console.groq.com/keys](https://console.groq.com/keys)
+- [Website](https://writing.zaixos.com)
+- [Privacy policy](https://writing.zaixos.com/privacy)
+- [Groq API keys](https://console.groq.com/keys)
